@@ -2,7 +2,7 @@
 FROM golang:1.26.2-trixie AS builder
 
 ARG VERSION
-RUN apk add --update --no-cache git make mailcap
+RUN apt-get update && apt-get install -y git make mailcap
 WORKDIR /app/
 COPY go.mod go.sum /app/
 RUN go mod download

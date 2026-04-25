@@ -15,15 +15,15 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
-	"github.com/pterodactyl/wings/internal/models"
+	"github.com/tonimatasdev/wings/internal/models"
 
-	"github.com/pterodactyl/wings/system"
+	"github.com/tonimatasdev/wings/system"
 
-	"github.com/pterodactyl/wings/config"
-	"github.com/pterodactyl/wings/environment"
-	"github.com/pterodactyl/wings/environment/docker"
-	"github.com/pterodactyl/wings/router/tokens"
-	"github.com/pterodactyl/wings/server"
+	"github.com/tonimatasdev/wings/config"
+	"github.com/tonimatasdev/wings/environment"
+	"github.com/tonimatasdev/wings/environment/docker"
+	"github.com/tonimatasdev/wings/router/tokens"
+	"github.com/tonimatasdev/wings/server"
 )
 
 const (

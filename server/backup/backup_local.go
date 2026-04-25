@@ -9,9 +9,9 @@ import (
 	"github.com/juju/ratelimit"
 	"github.com/mholt/archives"
 
-	"github.com/pterodactyl/wings/config"
-	"github.com/pterodactyl/wings/remote"
-	"github.com/pterodactyl/wings/server/filesystem"
+	"github.com/tonimatasdev/wings/config"
+	"github.com/tonimatasdev/wings/remote"
+	"github.com/tonimatasdev/wings/server/filesystem"
 )
 
 type LocalBackup struct {

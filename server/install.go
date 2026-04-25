@@ -18,10 +18,10 @@ import (
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/client"
 
-	"github.com/pterodactyl/wings/config"
-	"github.com/pterodactyl/wings/environment"
-	"github.com/pterodactyl/wings/remote"
-	"github.com/pterodactyl/wings/system"
+	"github.com/tonimatasdev/wings/config"
+	"github.com/tonimatasdev/wings/environment"
+	"github.com/tonimatasdev/wings/remote"
+	"github.com/tonimatasdev/wings/system"
 )
 
 // Install executes the installation stack for a server process. Bubbles any

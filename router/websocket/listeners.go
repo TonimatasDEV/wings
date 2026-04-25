@@ -8,10 +8,10 @@ import (
 
 	"emperror.dev/errors"
 
-	"github.com/pterodactyl/wings/events"
-	"github.com/pterodactyl/wings/system"
+	"github.com/tonimatasdev/wings/events"
+	"github.com/tonimatasdev/wings/system"
 
-	"github.com/pterodactyl/wings/server"
+	"github.com/tonimatasdev/wings/server"
 )
 
 // RegisterListenerEvents will setup the server event listeners and expiration

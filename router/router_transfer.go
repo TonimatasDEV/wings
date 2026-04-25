@@ -18,11 +18,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"github.com/pterodactyl/wings/router/middleware"
-	"github.com/pterodactyl/wings/router/tokens"
-	"github.com/pterodactyl/wings/server"
-	"github.com/pterodactyl/wings/server/installer"
-	"github.com/pterodactyl/wings/server/transfer"
+	"github.com/tonimatasdev/wings/router/middleware"
+	"github.com/tonimatasdev/wings/router/tokens"
+	"github.com/tonimatasdev/wings/server"
+	"github.com/tonimatasdev/wings/server/installer"
+	"github.com/tonimatasdev/wings/server/transfer"
 )
 
 // postTransfers .

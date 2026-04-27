@@ -37,7 +37,6 @@ func ConfigureDocker(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	defer cli.Close()
 
 	nw := config.Get().Docker.Network
 	resource, err := cli.NetworkInspect(ctx, nw.Name, network.InspectOptions{})

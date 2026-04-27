@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,7 +14,7 @@ import (
 
 	"github.com/tonimatasdev/wings/internal/models"
 
-	"emperror.dev/errors"
+	errors2 "emperror.dev/errors"
 	"github.com/apex/log"
 	"github.com/cenkalti/backoff/v4"
 
@@ -140,7 +141,7 @@ func (c *client) request(ctx context.Context, method, path string, body *bytes.B
 			// send no data if there was initially a body since the "requestOnce" method will read
 			// the whole buffer, thus leaving it empty at the end.
 			if _, err := b.Write(body.Bytes()); err != nil {
-				return backoff.Permanent(errors.Wrap(err, "http: failed to copy body buffer"))
+				return backoff.Permanent(errors2.Wrap(err, "http: failed to copy body buffer"))
 			}
 		}
 		r, err := c.requestOnce(ctx, method, path, &b, opts...)
@@ -148,7 +149,7 @@ func (c *client) request(ctx context.Context, method, path string, body *bytes.B
 			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 				return backoff.Permanent(err)
 			}
-			return errors.WrapIf(err, "http: request creation failed")
+			return errors2.WrapIf(err, "http: request creation failed")
 		}
 		res = r
 		if r.HasError() {
@@ -165,7 +166,7 @@ func (c *client) request(ctx context.Context, method, path string, body *bytes.B
 		return nil
 	}, c.backoff(ctx))
 	if err != nil {
-		if v, ok := err.(*backoff.PermanentError); ok {
+		if v, ok := errors.AsType[*backoff.PermanentError](err); ok {
 			return nil, v.Unwrap()
 		}
 		return nil, err
@@ -248,7 +249,7 @@ func (r *Response) BindJSON(v interface{}) error {
 		return err
 	}
 	if err := json.Unmarshal(b, &v); err != nil {
-		return errors.Wrap(err, "remote: could not unmarshal response")
+		return errors2.Wrap(err, "remote: could not unmarshal response")
 	}
 	return nil
 }
@@ -278,7 +279,7 @@ func (r *Response) Error() error {
 
 	e.response = r.Response
 
-	return errors.WithStackDepth(e, 1)
+	return errors2.WithStackDepth(e, 1)
 }
 
 // Logs the request into the debug log with all of the important request bits.

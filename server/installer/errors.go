@@ -1,5 +1,7 @@
 package installer
 
+import "errors"
+
 type validationError struct {
 	msg string
 }
@@ -9,7 +11,8 @@ func (e *validationError) Error() string {
 }
 
 func IsValidationError(err error) bool {
-	_, ok := err.(*validationError)
+	var validationError *validationError
+	ok := errors.As(err, &validationError)
 
 	return ok
 }

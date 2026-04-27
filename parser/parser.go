@@ -161,14 +161,14 @@ func (cfr *ConfigurationFileReplacement) UnmarshalJSON(data []byte) error {
 	iv, err := jsonparser.GetString(data, "if_value")
 	// We only check keypath here since match & replace_with should be present on all of
 	// them, however if_value is optional.
-	if err != nil && err != jsonparser.KeyPathNotFoundError {
+	if err != nil && !errors.Is(err, jsonparser.KeyPathNotFoundError) {
 		return err
 	}
 	cfr.IfValue = iv
 
 	rw, dt, _, err := jsonparser.Get(data, "replace_with")
 	if err != nil {
-		if err != jsonparser.KeyPathNotFoundError {
+		if !errors.Is(err, jsonparser.KeyPathNotFoundError) {
 			return err
 		}
 
@@ -556,7 +556,7 @@ func (f *ConfigurationFile) parsePropertiesFile(file ufs.File) error {
 		// Don't attempt to replace the value if we're looking for a specific value and
 		// it does not match. If there was no match at all in the file for this key but
 		// we're doing an IfValue match, do nothing.
-		if replace.IfValue != "" && (!ok || (ok && v != replace.IfValue)) {
+		if replace.IfValue != "" && (!ok || (v != replace.IfValue)) {
 			continue
 		}
 

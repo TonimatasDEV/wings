@@ -56,7 +56,7 @@ func (ac *activityCron) Run(ctx context.Context) error {
 		activities = append(activities, v)
 	}
 
-	// Delete any invalid activies
+	// Delete any invalid activities
 	if len(ids) > 0 {
 		tx = database.Instance().WithContext(ctx).Where("id IN ?", ids).Delete(&models.Activity{})
 		if tx.Error != nil {
@@ -78,7 +78,7 @@ func (ac *activityCron) Run(ctx context.Context) error {
 	}
 
 	// SQLite has a limitation of how many parameters we can specify in a single
-	// query, so we need to delete the activies in chunks of 32,000 instead of
+	// query, so we need to delete the activities in chunks of 32,000 instead of
 	// all at once.
 	i := 0
 	idsLen := len(ids)

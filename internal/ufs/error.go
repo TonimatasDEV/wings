@@ -63,9 +63,8 @@ func convertErrorType(err error) error {
 		return nil
 	}
 
-	var pErr *PathError
-	if errors.As(err, &pErr) {
-		if errno, ok := pErr.Err.(syscall.Errno); ok {
+	if pErr, ok := errors.AsType[*PathError](err); ok {
+		if errno, ok2 := errors.AsType[syscall.Errno](pErr.Err); ok2 {
 			return errnoToPathError(errno, pErr.Op, pErr.Path)
 		}
 		return pErr
@@ -74,8 +73,7 @@ func convertErrorType(err error) error {
 	// If the error wasn't already a path error and is a errno, wrap it with
 	// details that we can use to know there is something wrong with our
 	// error wrapping somewhere.
-	var errno syscall.Errno
-	if errors.As(err, &errno) {
+	if _, ok := errors.AsType[syscall.Errno](err); ok {
 		return &PathError{
 			Op:   "!(UNKNOWN)",
 			Path: "!(UNKNOWN)",
@@ -94,13 +92,12 @@ func ensurePathError(err error, op, path string) error {
 	}
 
 	// Check if the error is already a PathError.
-	var pErr *PathError
-	if errors.As(err, &pErr) {
+	if pErr, ok := errors.AsType[*PathError](err); ok {
 		// If underlying error is a errno, convert it.
 		//
 		// DO NOT USE `errors.As` or whatever here, the error will either be
 		// an errno, or it will be wrapped already.
-		if errno, ok := pErr.Err.(syscall.Errno); ok {
+		if errno, ok2 := errors.AsType[syscall.Errno](pErr.Err); ok2 {
 			return errnoToPathError(errno, pErr.Op, pErr.Path)
 		}
 		// Return the PathError as-is without modification.
@@ -108,8 +105,7 @@ func ensurePathError(err error, op, path string) error {
 	}
 
 	// If the error is directly an errno, convert it to a PathError.
-	var errno syscall.Errno
-	if errors.As(err, &errno) {
+	if errno, ok := errors.AsType[syscall.Errno](err); ok {
 		return errnoToPathError(errno, op, path)
 	}
 
@@ -123,51 +119,51 @@ func ensurePathError(err error, op, path string) error {
 
 // errnoToPathError converts an errno into a proper path error.
 func errnoToPathError(err syscall.Errno, op, path string) error {
-	switch err {
+	switch {
 	// File exists
-	case unix.EEXIST:
+	case errors.Is(err, unix.EEXIST):
 		return &PathError{
 			Op:   op,
 			Path: path,
 			Err:  ErrExist,
 		}
-	// Is a directory
-	case unix.EISDIR:
+		// Is a directory
+	case errors.Is(err, unix.EISDIR):
 		return &PathError{
 			Op:   op,
 			Path: path,
 			Err:  ErrIsDirectory,
 		}
-	// Not a directory
-	case unix.ENOTDIR:
+		// Not a directory
+	case errors.Is(err, unix.ENOTDIR):
 		return &PathError{
 			Op:   op,
 			Path: path,
 			Err:  ErrNotDirectory,
 		}
-	// No such file or directory
-	case unix.ENOENT:
+		// No such file or directory
+	case errors.Is(err, unix.ENOENT):
 		return &PathError{
 			Op:   op,
 			Path: path,
 			Err:  ErrNotExist,
 		}
-	// Operation not permitted
-	case unix.EPERM:
+		// Operation not permitted
+	case errors.Is(err, unix.EPERM):
 		return &PathError{
 			Op:   op,
 			Path: path,
 			Err:  ErrPermission,
 		}
-	// Invalid cross-device link
-	case unix.EXDEV:
+		// Invalid cross-device link
+	case errors.Is(err, unix.EXDEV):
 		return &PathError{
 			Op:   op,
 			Path: path,
 			Err:  ErrBadPathResolution,
 		}
-	// Too many levels of symbolic links
-	case unix.ELOOP:
+		// Too many levels of symbolic links
+	case errors.Is(err, unix.ELOOP):
 		return &PathError{
 			Op:   op,
 			Path: path,

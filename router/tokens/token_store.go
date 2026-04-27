@@ -27,7 +27,7 @@ func getTokenStore() *TokenStore {
 	return _tokens
 }
 
-// Checks if a token is valid or not.
+// IsValidToken Checks if a token is valid or not.
 func (t *TokenStore) IsValidToken(token string) bool {
 	t.Lock()
 	defer t.Unlock()

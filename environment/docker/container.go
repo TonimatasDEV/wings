@@ -12,12 +12,11 @@ import (
 	"emperror.dev/errors"
 	"github.com/apex/log"
 	"github.com/buger/jsonparser"
+	"github.com/containerd/errdefs"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
-	"github.com/docker/docker/client"
-
 	"github.com/tonimatasdev/wings/config"
 	"github.com/tonimatasdev/wings/environment"
 	"github.com/tonimatasdev/wings/system"
@@ -114,7 +113,7 @@ func (e *Environment) InSituUpdate() error {
 		// to the disk.
 		//
 		// We'll let a boot process make modifications to the container if needed at this point.
-		if client.IsErrNotFound(err) {
+		if errdefs.IsNotFound(err) {
 			return nil
 		}
 		return errors.Wrap(err, "environment/docker: could not inspect container")
@@ -143,7 +142,7 @@ func (e *Environment) Create() error {
 	// container anyways.
 	if _, err := e.ContainerInspect(ctx); err == nil {
 		return nil
-	} else if !client.IsErrNotFound(err) {
+	} else if !errdefs.IsNotFound(err) {
 		return errors.WrapIf(err, "environment/docker: failed to inspect container")
 	}
 
@@ -201,14 +200,14 @@ func (e *Environment) Create() error {
 		networkMode = container.NetworkMode(networkName)
 
 		if _, err := e.client.NetworkInspect(ctx, networkName, network.InspectOptions{}); err != nil {
-			if !client.IsErrNotFound(err) {
+
+			if !errdefs.IsNotFound(err) {
 				return err
 			}
 
-			enableIPv6 := false
 			if _, err := e.client.NetworkCreate(ctx, networkName, network.CreateOptions{
 				Driver:     "bridge",
-				EnableIPv6: &enableIPv6,
+				EnableIPv6: new(false),
 				Internal:   false,
 				Attachable: false,
 				Ingress:    false,
@@ -284,7 +283,7 @@ func (e *Environment) Destroy() error {
 	// exist on the system. We're just a step ahead of ourselves in that case.
 	//
 	// @see https://github.com/pterodactyl/panel/issues/2001
-	if err != nil && client.IsErrNotFound(err) {
+	if err != nil && errdefs.IsNotFound(err) {
 		return nil
 	}
 

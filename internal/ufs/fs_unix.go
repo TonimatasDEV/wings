@@ -370,7 +370,7 @@ func (fs *UnixFS) Remove(name string) error {
 	// file path, like /etc/passwd/foo, but in that case,
 	// both errors will be ENOTDIR, so it's okay to
 	// use the error from unlink.
-	if err1 != unix.ENOTDIR {
+	if !errors.Is(err1, unix.ENOTDIR) {
 		err = err1
 	}
 	return ensurePathError(err, "remove", name)
@@ -672,7 +672,7 @@ func (fs *UnixFS) openat(dirfd int, name string, flag int, mode FileMode) (int, 
 			break
 		}
 		// We have to check EINTR here, per issues https://go.dev/issue/11180 and https://go.dev/issue/39237.
-		if err == unix.EINTR {
+		if errors.Is(err, unix.EINTR) {
 			continue
 		}
 		return 0, err
@@ -739,9 +739,9 @@ func (fs *UnixFS) _openat(dirfd int, name string, flag int, mode uint32) (int, e
 	switch {
 	case err == nil:
 		return fd, nil
-	case err == unix.EINTR:
+	case errors.Is(err, unix.EINTR):
 		return fd, err
-	case err == unix.EAGAIN:
+	case errors.Is(err, unix.EAGAIN):
 		return fd, err
 	default:
 		return fd, ensurePathError(err, "openat", name)
@@ -778,9 +778,9 @@ func (fs *UnixFS) _openat2(dirfd int, name string, flag, mode uint64) (int, erro
 	switch {
 	case err == nil:
 		return fd, nil
-	case err == unix.EINTR:
+	case errors.Is(err, unix.EINTR):
 		return fd, err
-	case err == unix.EAGAIN:
+	case errors.Is(err, unix.EAGAIN):
 		return fd, err
 	default:
 		return fd, ensurePathError(err, "openat2", name)

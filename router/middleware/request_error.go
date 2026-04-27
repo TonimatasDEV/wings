@@ -2,11 +2,12 @@ package middleware
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"os"
 	"strings"
 
-	"emperror.dev/errors"
+	errors2 "emperror.dev/errors"
 	"github.com/apex/log"
 	"github.com/gin-gonic/gin"
 
@@ -28,7 +29,7 @@ func NewError(err error) *RequestError {
 		// Attach a stacktrace to the error if it is missing at this point and mark it
 		// as originating from the location where NewError was called, rather than this
 		// specific point in the code.
-		err: errors.WithStackDepthIf(err, 1),
+		err: errors2.WithStackDepthIf(err, 1),
 	}
 }
 
@@ -38,7 +39,7 @@ func (re *RequestError) SetMessage(m string) {
 	re.msg = m
 }
 
-// SetStatus sets the HTTP status code for the error response. By default this
+// SetStatus sets the HTTP status code for the error response. By default, this
 // is a HTTP-500 error.
 func (re *RequestError) SetStatus(s int) {
 	re.status = s
@@ -134,7 +135,7 @@ func (re *RequestError) asFilesystemError() (int, string) {
 	if strings.HasSuffix(err.Error(), "file name too long") {
 		return http.StatusBadRequest, "Cannot perform that action: file name is too long."
 	}
-	if e, ok := err.(*os.SyscallError); ok && e.Syscall == "readdirent" {
+	if e, ok := errors.AsType[*os.SyscallError](err); ok && e.Syscall == "readdirent" {
 		return http.StatusNotFound, "The requested directory does not exist."
 	}
 	return 0, ""

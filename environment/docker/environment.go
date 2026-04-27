@@ -8,6 +8,7 @@ import (
 
 	"emperror.dev/errors"
 	"github.com/apex/log"
+	"github.com/containerd/errdefs"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 
@@ -119,7 +120,7 @@ func (e *Environment) Exists() (bool, error) {
 	if err != nil {
 		// If this error is because the container instance wasn't found via Docker we
 		// can safely ignore the error and just return false.
-		if client.IsErrNotFound(err) {
+		if errdefs.IsNotFound(err) {
 			return false, nil
 		}
 		return false, err
@@ -158,7 +159,7 @@ func (e *Environment) ExitState() (uint32, bool, error) {
 		// so that's a mystery that will have to go unsolved.
 		//
 		// @see https://github.com/pterodactyl/panel/issues/2003
-		if client.IsErrNotFound(err) {
+		if errdefs.IsNotFound(err) {
 			return 1, false, nil
 		}
 		return 0, false, errors.WrapIf(err, "environment/docker: failed to inspect container")

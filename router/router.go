@@ -78,7 +78,7 @@ func Configure(m *wserver.Manager, client remote.Client) *gin.Engine {
 		server.POST("/install", postServerInstall)
 		server.POST("/reinstall", postServerReinstall)
 		server.POST("/sync", postServerSync)
-		server.POST("/ws/deny", postServerDenyWSTokens)
+		//server.POST("/ws/deny", postServerDenyWSTokens) TODO: Remove
 
 		// This archive request causes the archive to start being created
 		// this should only be triggered by the panel.

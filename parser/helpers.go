@@ -2,6 +2,7 @@ package parser
 
 import (
 	"bytes"
+	"errors"
 	"regexp"
 	"strconv"
 	"strings"
@@ -33,7 +34,7 @@ var configMatchRegex = regexp.MustCompile(`{{\s?config\.([\w.-]+)\s?}}`)
 // </Root>
 //
 // noinspection RegExpRedundantEscape
-var xmlValueMatchRegex = regexp.MustCompile(`^\[([\w]+)='(.*)'\]$`)
+var xmlValueMatchRegex = regexp.MustCompile(`^\[(\w+)='(.*)'\]$`)
 
 // Gets the value of a key based on the value type defined.
 func (cfr *ConfigurationFileReplacement) getKeyValue(value string) interface{} {
@@ -51,7 +52,7 @@ func (cfr *ConfigurationFileReplacement) getKeyValue(value string) interface{} {
 	return value
 }
 
-// Iterate over an unstructured JSON/YAML/etc. interface and set all of the required
+// IterateOverJson Iterate over an unstructured JSON/YAML/etc. interface and set all of the required
 // key/value pairs for the configuration file.
 //
 // We need to support wildcard characters in key searches, this allows you to make
@@ -108,7 +109,7 @@ func (f *ConfigurationFile) IterateOverJson(data []byte) (*gabs.Container, error
 
 // Regex used to check if there is an array element present in the given pathway by looking for something
 // along the lines of "something[1]" or "something[1].nestedvalue" as the path.
-var checkForArrayElement = regexp.MustCompile(`^([^\[\]]+)\[([\d]+)](\..+)?$`)
+var checkForArrayElement = regexp.MustCompile(`^([^\[\]]+)\[(\d+)](\..+)?$`)
 
 // Attempt to set the value of the path depending on if it is an array or not. Gabs cannot handle array
 // values as "something[1]" but can parse them just fine. This is basically just overly complex code
@@ -178,7 +179,7 @@ func setValueAtPath(c *gabs.Container, path string, value interface{}) error {
 	return nil
 }
 
-// Sets the value at a specific pathway, but checks if we were looking for a specific
+// SetAtPathway Sets the value at a specific pathway, but checks if we were looking for a specific
 // value or not before doing it.
 func (cfr *ConfigurationFileReplacement) SetAtPathway(c *gabs.Container, path string, value string) error {
 	if cfr.IfValue == "" {
@@ -214,7 +215,7 @@ func (cfr *ConfigurationFileReplacement) SetAtPathway(c *gabs.Container, path st
 	return setValueAtPath(c, path, cfr.getKeyValue(value))
 }
 
-// Looks up a configuration value on the Daemon given a dot-notated syntax.
+// LookupConfigurationValue Looks up a configuration value on the Daemon given a dot-notated syntax.
 func (f *ConfigurationFile) LookupConfigurationValue(cfr ConfigurationFileReplacement) (string, error) {
 	// If this is not something that we can do a regex lookup on then just continue
 	// on our merry way. If the value isn't a string, we're not going to be doing anything
@@ -239,7 +240,7 @@ func (f *ConfigurationFile) LookupConfigurationValue(cfr ConfigurationFileReplac
 	// calling function.
 	match, _, _, err := jsonparser.Get(f.configuration, path...)
 	if err != nil {
-		if err != jsonparser.KeyPathNotFoundError {
+		if !errors.Is(err, jsonparser.KeyPathNotFoundError) {
 			return string(match), err
 		}
 

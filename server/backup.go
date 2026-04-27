@@ -8,8 +8,7 @@ import (
 
 	"emperror.dev/errors"
 	"github.com/apex/log"
-	"github.com/docker/docker/client"
-
+	"github.com/containerd/errdefs"
 	"github.com/tonimatasdev/wings/environment"
 	"github.com/tonimatasdev/wings/remote"
 	"github.com/tonimatasdev/wings/server/backup"
@@ -96,9 +95,9 @@ func (s *Server) Backup(b backup.BackupInterface) error {
 
 		s.Log().WithField("error", notifyError).Info("failed to notify panel of successful backup state")
 		return err
-	} else {
-		s.Log().WithField("backup", b.Identifier()).Info("notified panel of successful backup state")
 	}
+
+	s.Log().WithField("backup", b.Identifier()).Info("notified panel of successful backup state")
 
 	// Emit an event over the socket so we can update the backup in realtime on
 	// the frontend for the server.
@@ -142,7 +141,7 @@ func (s *Server) RestoreBackup(b backup.BackupInterface, reader io.ReadCloser) (
 	// server being suspended.
 	if s.Environment.State() != environment.ProcessOfflineState {
 		if err = s.Environment.WaitForStop(s.Context(), 2*time.Minute, false); err != nil {
-			if !client.IsErrNotFound(err) {
+			if !errdefs.IsNotFound(err) {
 				return errors.WrapIf(err, "server/backup: restore: failed to wait for container stop")
 			}
 		}

@@ -3,6 +3,7 @@ package router
 import (
 	"bufio"
 	"context"
+	"errors"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -13,7 +14,7 @@ import (
 	"strconv"
 	"strings"
 
-	"emperror.dev/errors"
+	errors2 "emperror.dev/errors"
 	"github.com/apex/log"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/sync/errgroup"
@@ -278,7 +279,7 @@ func postServerPullRemoteFile(c *gin.Context) {
 	s := ExtractServer(c)
 	var data struct {
 		// Deprecated
-		Directory  string `binding:"required_without=RootPath,omitempty" json:"directory"`
+		Directory  string `binding:"required_without=RootPath,omitempty" json:"directory"` // Todo: Remove directory
 		RootPath   string `binding:"required_without=Directory,omitempty" json:"root"`
 		URL        string `binding:"required" json:"url"`
 		FileName   string `json:"file_name"`
@@ -296,7 +297,7 @@ func postServerPullRemoteFile(c *gin.Context) {
 
 	u, err := url.Parse(data.URL)
 	if err != nil {
-		if e, ok := err.(*url.Error); ok {
+		if e, ok := errors.AsType[*url.Error](err); ok {
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 				"error": "An error occurred while parsing that URL: " + e.Err.Error(),
 			})
@@ -482,7 +483,7 @@ func postServerDecompressFiles(c *gin.Context) {
 		// much we specifically can do. They'll need to stop the running server process in order to overwrite
 		// a file like this.
 		if strings.Contains(err.Error(), "text file busy") {
-			lg.WithField("error", errors.WithStackIf(err)).Warn("failed to decompress file: text file busy")
+			lg.WithField("error", errors2.WithStackIf(err)).Warn("failed to decompress file: text file busy")
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 				"error": "One or more files this archive is attempting to overwrite are currently in use by another process. Please try again.",
 			})
@@ -499,7 +500,7 @@ type chmodFile struct {
 	Mode string `json:"mode"`
 }
 
-var errInvalidFileMode = errors.New("invalid file mode")
+var errInvalidFileMode = errors2.New("invalid file mode")
 
 func postServerChmodFile(c *gin.Context) {
 	s := ExtractServer(c)
@@ -619,12 +620,12 @@ func postServerUploadFiles(c *gin.Context) {
 		if err := handleFileUpload(filepath.Join(directory, header.Filename), s, header); err != nil {
 			middleware.CaptureAndAbort(c, err)
 			return
-		} else {
-			s.SaveActivity(s.NewRequestActivity(token.UserUuid, c.ClientIP()), server.ActivityFileUploaded, models.ActivityMeta{
-				"file":      header.Filename,
-				"directory": filepath.Clean(directory),
-			})
 		}
+
+		s.SaveActivity(s.NewRequestActivity(token.UserUuid, c.ClientIP()), server.ActivityFileUploaded, models.ActivityMeta{
+			"file":      header.Filename,
+			"directory": filepath.Clean(directory),
+		})
 	}
 }
 

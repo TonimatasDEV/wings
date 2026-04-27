@@ -142,7 +142,7 @@ func (t *Transfer) PushArchiveToTarget(url, token string) ([]byte, error) {
 	case err2 := <-errChan:
 		t.Log().Debug("stream completed")
 		if err != nil || err2 != nil {
-			if err == context.Canceled {
+			if errors.Is(err, context.Canceled) {
 				return nil, err
 			}
 

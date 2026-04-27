@@ -10,12 +10,12 @@ import (
 	"github.com/tonimatasdev/wings/environment"
 )
 
-// To avoid confusion when working with mounts, assume that a server.Mount has not been properly
+// Mount To avoid confusion when working with mounts, assume that a server.Mount has not been properly
 // cleaned up and had the paths set. An environment.Mount should only be returned with valid paths
 // that have been checked.
 type Mount environment.Mount
 
-// Returns the default container mounts for the server instance. This includes the data directory
+// Mounts Returns the default container mounts for the server instance. This includes the data directory
 // for the server. Previously this would also mount in host timezone files, however we've moved from
 // that approach to just setting `TZ=Timezone` environment values in containers which should work
 // in most scenarios.

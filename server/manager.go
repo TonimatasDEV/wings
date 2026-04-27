@@ -171,7 +171,7 @@ func (m *Manager) ReadStates() (map[string]string, error) {
 	if err := json.NewDecoder(f).Decode(&states); err != nil && err != io.EOF {
 		return nil, errors.WithStack(err)
 	}
-	out := make(map[string]string, 0)
+	out := make(map[string]string)
 	// Only return states for servers that we're currently tracking in the system.
 	for id, state := range states {
 		if _, ok := m.Get(id); ok {

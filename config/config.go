@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -17,7 +18,7 @@ import (
 	"text/template"
 	"time"
 
-	"emperror.dev/errors"
+	errors2 "emperror.dev/errors"
 	"github.com/acobaugh/osrelease"
 	"github.com/apex/log"
 	"github.com/creasty/defaults"
@@ -44,10 +45,9 @@ var DefaultTLSConfig = &tls.Config{
 		tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
 		tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
 	},
-	PreferServerCipherSuites: true,
-	MinVersion:               tls.VersionTLS12,
-	MaxVersion:               tls.VersionTLS13,
-	CurvePreferences:         []tls.CurveID{tls.X25519, tls.CurveP256},
+	MinVersion:       tls.VersionTLS12,
+	MaxVersion:       tls.VersionTLS13,
+	CurvePreferences: []tls.CurveID{tls.X25519, tls.CurveP256},
 }
 
 var (
@@ -429,9 +429,8 @@ func Get() *Configuration {
 	// Create a copy of the struct so that all modifications made beyond this
 	// point are immutable.
 	//goland:noinspection GoVetCopyLock
-	c := *_config
 	mu.RUnlock()
-	return &c
+	return new(*_config)
 }
 
 // Update performs an in-situ update of the global configuration object using
@@ -465,7 +464,7 @@ func WriteToDisk(c *Configuration) error {
 		ccopy.Debug = false
 	}
 	if c.path == "" {
-		return errors.New("cannot write configuration, no path defined in struct")
+		return errors2.New("cannot write configuration, no path defined in struct")
 	}
 	b, err := yaml.Marshal(&ccopy)
 	if err != nil {
@@ -515,7 +514,7 @@ func EnsurePterodactylUser() error {
 	// If an error is returned but it isn't the unknown user error just abort
 	// the process entirely. If we did find a user, return it immediately.
 	if err != nil {
-		if _, ok := err.(user.UnknownUserError); !ok {
+		if _, ok := errors.AsType[user.UnknownUserError](err); !ok {
 			return err
 		}
 	} else {
@@ -733,7 +732,7 @@ func EnableLogRotation() error {
 		return err
 	}
 
-	return errors.Wrap(t.Execute(f, _config.System), "config: failed to write logrotate to disk")
+	return errors2.Wrap(t.Execute(f, _config.System), "config: failed to write logrotate to disk")
 }
 
 // GetStatesPath returns the location of the JSON file that tracks server states.
@@ -755,7 +754,7 @@ func ConfigureTimezone() error {
 		b, err := os.ReadFile("/etc/timezone")
 		if err != nil {
 			if !os.IsNotExist(err) {
-				return errors.WithMessage(err, "config: failed to open timezone file")
+				return errors2.WithMessage(err, "config: failed to open timezone file")
 			}
 
 			_config.System.Timezone = "UTC"
@@ -785,7 +784,7 @@ func ConfigureTimezone() error {
 	_config.System.Timezone = regexp.MustCompile(`(?i)[^a-z_/]+`).ReplaceAllString(_config.System.Timezone, "")
 	_, err := time.LoadLocation(_config.System.Timezone)
 
-	return errors.WithMessage(err, fmt.Sprintf("the supplied timezone %s is invalid", _config.System.Timezone))
+	return errors2.WithMessage(err, fmt.Sprintf("the supplied timezone %s is invalid", _config.System.Timezone))
 }
 
 // Gets the system release name.

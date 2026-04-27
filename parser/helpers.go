@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"emperror.dev/errors"
+	error2 "emperror.dev/errors"
 	"github.com/Jeffail/gabs/v2"
 	"github.com/apex/log"
 	"github.com/buger/jsonparser"
@@ -90,7 +90,7 @@ func (f *ConfigurationFile) IterateOverJson(data []byte) (*gabs.Container, error
 					if errors.Is(err, gabs.ErrNotFound) {
 						continue
 					}
-					return nil, errors.WithMessage(err, "failed to set config value of array child")
+					return nil, error2.WithMessage(err, "failed to set config value of array child")
 				}
 			}
 			continue
@@ -100,7 +100,7 @@ func (f *ConfigurationFile) IterateOverJson(data []byte) (*gabs.Container, error
 			if errors.Is(err, gabs.ErrNotFound) {
 				continue
 			}
-			return nil, errors.WithMessage(err, "unable to set config value at pathway: "+v.Match)
+			return nil, error2.WithMessage(err, "unable to set config value at pathway: "+v.Match)
 		}
 	}
 
@@ -133,7 +133,7 @@ func setValueAtPath(c *gabs.Container, path string, value interface{}) error {
 	ct, err := c.ArrayElementP(i, matches[1])
 	if err != nil {
 		if i != 0 || (!errors.Is(err, gabs.ErrNotArray) && !errors.Is(err, gabs.ErrNotFound)) {
-			return errors.WithMessage(err, "error while parsing array element at path")
+			return error2.WithMessage(err, "error while parsing array element at path")
 		}
 
 		t := make([]interface{}, 1)
@@ -148,7 +148,7 @@ func setValueAtPath(c *gabs.Container, path string, value interface{}) error {
 		// an empty object if we have additional things to set on the array, or just an empty array type
 		// if there is not an object structure detected (no matches[3] available).
 		if _, err = c.SetP(t, matches[1]); err != nil {
-			return errors.WithMessage(err, "failed to create empty array for missing element")
+			return error2.WithMessage(err, "failed to create empty array for missing element")
 		}
 
 		// Set our cursor to be the array element we expect, which in this case is just the first element
@@ -156,7 +156,7 @@ func setValueAtPath(c *gabs.Container, path string, value interface{}) error {
 		// to match additional elements. In those cases the server will just have to be rebooted or something.
 		ct, err = c.ArrayElementP(0, matches[1])
 		if err != nil {
-			return errors.WithMessage(err, "failed to find array element at path")
+			return error2.WithMessage(err, "failed to find array element at path")
 		}
 	}
 
@@ -173,7 +173,7 @@ func setValueAtPath(c *gabs.Container, path string, value interface{}) error {
 	}
 
 	if err != nil {
-		return errors.WithMessage(err, "failed to set value at config path: "+path)
+		return error2.WithMessage(err, "failed to set value at config path: "+path)
 	}
 
 	return nil

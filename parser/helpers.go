@@ -2,11 +2,12 @@ package parser
 
 import (
 	"bytes"
+	"errors"
 	"regexp"
 	"strconv"
 	"strings"
 
-	"emperror.dev/errors"
+	error2 "emperror.dev/errors"
 	"github.com/Jeffail/gabs/v2"
 	"github.com/apex/log"
 	"github.com/buger/jsonparser"
@@ -33,7 +34,7 @@ var configMatchRegex = regexp.MustCompile(`{{\s?config\.([\w.-]+)\s?}}`)
 // </Root>
 //
 // noinspection RegExpRedundantEscape
-var xmlValueMatchRegex = regexp.MustCompile(`^\[([\w]+)='(.*)'\]$`)
+var xmlValueMatchRegex = regexp.MustCompile(`^\[(\w+)='(.*)'\]$`)
 
 // Gets the value of a key based on the value type defined.
 func (cfr *ConfigurationFileReplacement) getKeyValue(value string) interface{} {
@@ -51,7 +52,7 @@ func (cfr *ConfigurationFileReplacement) getKeyValue(value string) interface{} {
 	return value
 }
 
-// Iterate over an unstructured JSON/YAML/etc. interface and set all of the required
+// IterateOverJson Iterate over an unstructured JSON/YAML/etc. interface and set all of the required
 // key/value pairs for the configuration file.
 //
 // We need to support wildcard characters in key searches, this allows you to make
@@ -89,7 +90,7 @@ func (f *ConfigurationFile) IterateOverJson(data []byte) (*gabs.Container, error
 					if errors.Is(err, gabs.ErrNotFound) {
 						continue
 					}
-					return nil, errors.WithMessage(err, "failed to set config value of array child")
+					return nil, error2.WithMessage(err, "failed to set config value of array child")
 				}
 			}
 			continue
@@ -99,7 +100,7 @@ func (f *ConfigurationFile) IterateOverJson(data []byte) (*gabs.Container, error
 			if errors.Is(err, gabs.ErrNotFound) {
 				continue
 			}
-			return nil, errors.WithMessage(err, "unable to set config value at pathway: "+v.Match)
+			return nil, error2.WithMessage(err, "unable to set config value at pathway: "+v.Match)
 		}
 	}
 
@@ -108,7 +109,7 @@ func (f *ConfigurationFile) IterateOverJson(data []byte) (*gabs.Container, error
 
 // Regex used to check if there is an array element present in the given pathway by looking for something
 // along the lines of "something[1]" or "something[1].nestedvalue" as the path.
-var checkForArrayElement = regexp.MustCompile(`^([^\[\]]+)\[([\d]+)](\..+)?$`)
+var checkForArrayElement = regexp.MustCompile(`^([^\[\]]+)\[(\d+)](\..+)?$`)
 
 // Attempt to set the value of the path depending on if it is an array or not. Gabs cannot handle array
 // values as "something[1]" but can parse them just fine. This is basically just overly complex code
@@ -132,7 +133,7 @@ func setValueAtPath(c *gabs.Container, path string, value interface{}) error {
 	ct, err := c.ArrayElementP(i, matches[1])
 	if err != nil {
 		if i != 0 || (!errors.Is(err, gabs.ErrNotArray) && !errors.Is(err, gabs.ErrNotFound)) {
-			return errors.WithMessage(err, "error while parsing array element at path")
+			return error2.WithMessage(err, "error while parsing array element at path")
 		}
 
 		t := make([]interface{}, 1)
@@ -147,7 +148,7 @@ func setValueAtPath(c *gabs.Container, path string, value interface{}) error {
 		// an empty object if we have additional things to set on the array, or just an empty array type
 		// if there is not an object structure detected (no matches[3] available).
 		if _, err = c.SetP(t, matches[1]); err != nil {
-			return errors.WithMessage(err, "failed to create empty array for missing element")
+			return error2.WithMessage(err, "failed to create empty array for missing element")
 		}
 
 		// Set our cursor to be the array element we expect, which in this case is just the first element
@@ -155,7 +156,7 @@ func setValueAtPath(c *gabs.Container, path string, value interface{}) error {
 		// to match additional elements. In those cases the server will just have to be rebooted or something.
 		ct, err = c.ArrayElementP(0, matches[1])
 		if err != nil {
-			return errors.WithMessage(err, "failed to find array element at path")
+			return error2.WithMessage(err, "failed to find array element at path")
 		}
 	}
 
@@ -172,13 +173,13 @@ func setValueAtPath(c *gabs.Container, path string, value interface{}) error {
 	}
 
 	if err != nil {
-		return errors.WithMessage(err, "failed to set value at config path: "+path)
+		return error2.WithMessage(err, "failed to set value at config path: "+path)
 	}
 
 	return nil
 }
 
-// Sets the value at a specific pathway, but checks if we were looking for a specific
+// SetAtPathway Sets the value at a specific pathway, but checks if we were looking for a specific
 // value or not before doing it.
 func (cfr *ConfigurationFileReplacement) SetAtPathway(c *gabs.Container, path string, value string) error {
 	if cfr.IfValue == "" {
@@ -214,7 +215,7 @@ func (cfr *ConfigurationFileReplacement) SetAtPathway(c *gabs.Container, path st
 	return setValueAtPath(c, path, cfr.getKeyValue(value))
 }
 
-// Looks up a configuration value on the Daemon given a dot-notated syntax.
+// LookupConfigurationValue Looks up a configuration value on the Daemon given a dot-notated syntax.
 func (f *ConfigurationFile) LookupConfigurationValue(cfr ConfigurationFileReplacement) (string, error) {
 	// If this is not something that we can do a regex lookup on then just continue
 	// on our merry way. If the value isn't a string, we're not going to be doing anything
@@ -239,7 +240,7 @@ func (f *ConfigurationFile) LookupConfigurationValue(cfr ConfigurationFileReplac
 	// calling function.
 	match, _, _, err := jsonparser.Get(f.configuration, path...)
 	if err != nil {
-		if err != jsonparser.KeyPathNotFoundError {
+		if !errors.Is(err, jsonparser.KeyPathNotFoundError) {
 			return string(match), err
 		}
 

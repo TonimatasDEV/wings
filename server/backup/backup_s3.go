@@ -2,6 +2,7 @@ package backup
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -9,7 +10,7 @@ import (
 	"strconv"
 	"time"
 
-	"emperror.dev/errors"
+	error2 "emperror.dev/errors"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/juju/ratelimit"
 	"github.com/mholt/archives"
@@ -64,7 +65,7 @@ func (s *S3Backup) Generate(ctx context.Context, fsys *filesystem.Filesystem, ig
 
 	rc, err := os.Open(s.Path())
 	if err != nil {
-		return nil, errors.Wrap(err, "backup: could not read archive from disk")
+		return nil, error2.Wrap(err, "backup: could not read archive from disk")
 	}
 	defer rc.Close()
 
@@ -74,7 +75,7 @@ func (s *S3Backup) Generate(ctx context.Context, fsys *filesystem.Filesystem, ig
 	}
 	ad, err := s.Details(ctx, parts)
 	if err != nil {
-		return nil, errors.WrapIf(err, "backup: failed to get archive details after upload")
+		return nil, error2.WrapIf(err, "backup: failed to get archive details after upload")
 	}
 	return ad, nil
 }
@@ -191,7 +192,7 @@ func (fu *s3FileUploader) backoff(ctx context.Context) backoff.BackOffContext {
 func (fu *s3FileUploader) uploadPart(ctx context.Context, part string, size int64) (string, error) {
 	r, err := http.NewRequestWithContext(ctx, http.MethodPut, part, nil)
 	if err != nil {
-		return "", errors.Wrap(err, "backup: could not create request for S3")
+		return "", error2.Wrap(err, "backup: could not create request for S3")
 	}
 
 	r.ContentLength = size
@@ -210,12 +211,12 @@ func (fu *s3FileUploader) uploadPart(ctx context.Context, part string, size int6
 			}
 			// Don't use a permanent error here, if there is a temporary resolution error with
 			// the URL due to DNS issues we want to keep re-trying.
-			return errors.Wrap(err, "backup: S3 HTTP request failed")
+			return error2.Wrap(err, "backup: S3 HTTP request failed")
 		}
 		_ = res.Body.Close()
 
 		if res.StatusCode != http.StatusOK {
-			err := errors.New(fmt.Sprintf("backup: failed to put S3 object: [HTTP/%d] %s", res.StatusCode, res.Status))
+			err := error2.New(fmt.Sprintf("backup: failed to put S3 object: [HTTP/%d] %s", res.StatusCode, res.Status))
 			// Only attempt a backoff retry if this error is because of a 5xx error from
 			// the S3 endpoint. Any 4xx error should be treated as an error that a retry
 			// would not fix.
@@ -232,7 +233,7 @@ func (fu *s3FileUploader) uploadPart(ctx context.Context, part string, size int6
 		return nil
 	}, fu.backoff(ctx))
 	if err != nil {
-		if v, ok := err.(*backoff.PermanentError); ok {
+		if v, ok := errors.AsType[*backoff.PermanentError](err); ok {
 			return "", v.Unwrap()
 		}
 		return "", err

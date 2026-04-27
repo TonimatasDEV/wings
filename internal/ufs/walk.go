@@ -9,6 +9,7 @@
 package ufs
 
 import (
+	"errors"
 	iofs "io/fs"
 	"path"
 )
@@ -82,7 +83,7 @@ func WalkDir(fs Filesystem, root string, fn WalkDirFunc) error {
 	} else {
 		err = walkDir(fs, root, iofs.FileInfoToDirEntry(info), fn)
 	}
-	if err == SkipDir || err == SkipAll {
+	if errors.Is(err, SkipDir) || errors.Is(err, SkipAll) {
 		return nil
 	}
 	return err
@@ -91,7 +92,7 @@ func WalkDir(fs Filesystem, root string, fn WalkDirFunc) error {
 // walkDir recursively descends path, calling walkDirFn.
 func walkDir(fs Filesystem, name string, d DirEntry, walkDirFn WalkDirFunc) error {
 	if err := walkDirFn(name, d, nil); err != nil || !d.IsDir() {
-		if err == SkipDir && d.IsDir() {
+		if errors.Is(err, SkipDir) && d.IsDir() {
 			// Successfully skipped directory.
 			err = nil
 		}
@@ -103,7 +104,7 @@ func walkDir(fs Filesystem, name string, d DirEntry, walkDirFn WalkDirFunc) erro
 		// Second call, to report ReadDir error.
 		err = walkDirFn(name, d, err)
 		if err != nil {
-			if err == SkipDir && d.IsDir() {
+			if errors.Is(err, SkipDir) && d.IsDir() {
 				err = nil
 			}
 			return err
@@ -113,7 +114,7 @@ func walkDir(fs Filesystem, name string, d DirEntry, walkDirFn WalkDirFunc) erro
 	for _, d1 := range dirs {
 		name1 := path.Join(name, d1.Name())
 		if err := walkDir(fs, name1, d1, walkDirFn); err != nil {
-			if err == SkipDir {
+			if errors.Is(err, SkipDir) {
 				break
 			}
 			return err

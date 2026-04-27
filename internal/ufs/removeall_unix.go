@@ -62,11 +62,9 @@ func removeAll(fs unixFS, path string) error {
 	defer parent.Close()
 
 	if err := removeAllFrom(fs, parent, base); err != nil {
-		if pathErr, ok := err.(*PathError); ok {
+		if pathErr, ok := errors.AsType[*PathError](err); ok {
 			pathErr.Path = parentDir + string(os.PathSeparator) + pathErr.Path
 			err = convertErrorType(pathErr)
-		} else {
-			err = ensurePathError(err, "removeallfrom", base)
 		}
 		return err
 	}
@@ -99,11 +97,9 @@ func removeContents(fs unixFS, path string) error {
 	defer parent.Close()
 
 	if err := removeContentsFrom(fs, parent, base); err != nil {
-		if pathErr, ok := err.(*PathError); ok {
+		if pathErr, ok := errors.AsType[*PathError](err); ok {
 			pathErr.Path = parentDir + string(os.PathSeparator) + pathErr.Path
 			err = convertErrorType(pathErr)
-		} else {
-			err = ensurePathError(err, "removecontentsfrom", base)
 		}
 		return err
 	}
@@ -147,7 +143,7 @@ func removeContentsFrom(fs unixFS, parent File, base string) error {
 			for _, name := range names {
 				err := removeAllFrom(fs, file, name)
 				if err != nil {
-					if pathErr, ok := err.(*PathError); ok {
+					if pathErr, ok := errors.AsType[*PathError](err); ok {
 						pathErr.Path = base + string(os.PathSeparator) + pathErr.Path
 					}
 					numErr++
@@ -195,7 +191,7 @@ func removeAllFrom(fs unixFS, parent File, base string) error {
 	// the parent directory, but this entry might still be a directory
 	// whose contents need to be removed.
 	// Otherwise, just return the error.
-	if err != unix.EISDIR && err != unix.EPERM && err != unix.EACCES {
+	if !errors.Is(err, unix.EISDIR) && !errors.Is(err, unix.EPERM) && !errors.Is(err, unix.EACCES) {
 		return &PathError{Op: "unlinkat", Path: base, Err: err}
 	}
 
@@ -249,7 +245,7 @@ func openFdAt(dirfd int, name string) (File, error) {
 		}
 
 		// See comment in openFileNolog.
-		if err == unix.EINTR {
+		if errors.Is(err, unix.EINTR) {
 			continue
 		}
 

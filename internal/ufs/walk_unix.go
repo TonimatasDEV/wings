@@ -15,6 +15,7 @@ import (
 	"reflect"
 	"unsafe"
 
+	"emperror.dev/errors"
 	"golang.org/x/sys/unix"
 )
 
@@ -28,7 +29,7 @@ func (fs *UnixFS) WalkDirat(dirfd int, name string, fn WalkDiratFunc) error {
 		b := newScratchBuffer()
 		err = fs.walkDir(b, dirfd, name, ".", iofs.FileInfoToDirEntry(info), fn)
 	}
-	if err == SkipDir || err == SkipAll {
+	if errors.Is(err, SkipDir) || errors.Is(err, SkipAll) {
 		return nil
 	}
 	return err
@@ -36,7 +37,7 @@ func (fs *UnixFS) WalkDirat(dirfd int, name string, fn WalkDiratFunc) error {
 
 func (fs *UnixFS) walkDir(b []byte, parentfd int, name, relative string, d DirEntry, walkDirFn WalkDiratFunc) error {
 	if err := walkDirFn(parentfd, name, relative, d, nil); err != nil || !d.IsDir() {
-		if err == SkipDir && d.IsDir() {
+		if errors.Is(err, SkipDir) && d.IsDir() {
 			// Successfully skipped directory.
 			err = nil
 		}
@@ -56,7 +57,7 @@ func (fs *UnixFS) walkDir(b []byte, parentfd int, name, relative string, d DirEn
 		// Second call, to report ReadDir error.
 		err = walkDirFn(dirfd, name, relative, d, err)
 		if err != nil {
-			if err == SkipDir && d.IsDir() {
+			if errors.Is(err, SkipDir) && d.IsDir() {
 				err = nil
 			}
 			return err
@@ -79,7 +80,7 @@ func (fs *UnixFS) walkDir(b []byte, parentfd int, name, relative string, d DirEn
 			rel = path.Join(relative, name)
 		}
 		if err := fs.walkDir(b, dirfd, name, rel, d1, walkDirFn); err != nil {
-			if err == SkipDir {
+			if errors.Is(err, SkipDir) {
 				break
 			}
 			return err
@@ -224,7 +225,7 @@ func (fs *UnixFS) readDir(fd int, name, relative string, b []byte) ([]DirEntry, 
 		if len(workBuffer) == 0 {
 			n, err := unix.Getdents(fd, scratchBuffer)
 			if err != nil {
-				if err == unix.EINTR {
+				if errors.Is(err, unix.EINTR) {
 					continue
 				}
 				return nil, ensurePathError(err, "getdents", name)

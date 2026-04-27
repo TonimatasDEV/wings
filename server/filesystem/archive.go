@@ -3,6 +3,7 @@ package filesystem
 import (
 	"archive/tar"
 	"context"
+	"errors"
 	"io"
 	"io/fs"
 	"os"
@@ -10,7 +11,7 @@ import (
 	"strings"
 	"sync"
 
-	"emperror.dev/errors"
+	error2 "emperror.dev/errors"
 	"github.com/apex/log"
 	"github.com/juju/ratelimit"
 	"github.com/klauspost/pgzip"
@@ -110,7 +111,7 @@ type walkFunc func(dirfd int, name, relative string, d ufs.DirEntry) error
 // Stream streams the creation of the archive to the given writer.
 func (a *Archive) Stream(ctx context.Context, w io.Writer) error {
 	if a.Filesystem == nil {
-		return errors.New("filesystem: archive.Filesystem is unset")
+		return error2.New("filesystem: archive.Filesystem is unset")
 	}
 
 	// The base directory may come with a prefixed `/`, strip it to prevent
@@ -151,7 +152,7 @@ func (a *Archive) Stream(ctx context.Context, w io.Writer) error {
 
 	a.w = NewTarProgress(tw, a.Progress)
 
-	fs := a.Filesystem.unixFS
+	filesystem := a.Filesystem.unixFS
 
 	// If we're specifically looking for only certain files, or have requested
 	// that certain files be ignored we'll update the callback function to reflect
@@ -172,14 +173,14 @@ func (a *Archive) Stream(ctx context.Context, w io.Writer) error {
 	}
 
 	// Open the base directory we were provided.
-	dirfd, name, closeFd, err := fs.SafePath(a.BaseDirectory)
+	dirfd, name, closeFd, err := filesystem.SafePath(a.BaseDirectory)
 	defer closeFd()
 	if err != nil {
 		return err
 	}
 
 	// Recursively walk the base directory.
-	return fs.WalkDirat(dirfd, name, func(dirfd int, name, relative string, d ufs.DirEntry, err error) error {
+	return filesystem.WalkDirat(dirfd, name, func(dirfd int, name, relative string, d ufs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -221,7 +222,7 @@ func (a *Archive) callback(opts ...walkFunc) walkFunc {
 		// a non-nil error we will exit immediately.
 		for _, opt := range opts {
 			if err := opt(dirfd, name, relative, d); err != nil {
-				if err == SkipThis {
+				if errors.Is(err, SkipThis) {
 					return nil
 				}
 				return err
@@ -234,7 +235,7 @@ func (a *Archive) callback(opts ...walkFunc) walkFunc {
 	}
 }
 
-var SkipThis = errors.New("skip this")
+var SkipThis = error2.New("skip this")
 
 // Pushes only files defined in the Files key to the final archive.
 func (a *Archive) withFilesCallback() walkFunc {
@@ -266,7 +267,7 @@ func (a *Archive) addToArchive(dirfd int, name, relative string, entry ufs.DirEn
 		if errors.Is(err, ufs.ErrNotExist) {
 			return nil
 		}
-		return errors.WrapIff(err, "failed executing os.Lstat on '%s'", name)
+		return error2.WrapIff(err, "failed executing os.Lstat on '%s'", name)
 	}
 
 	// Skip socket files as they are unsupported by archive/tar.
@@ -295,7 +296,7 @@ func (a *Archive) addToArchive(dirfd int, name, relative string, entry ufs.DirEn
 	// Get the tar FileInfoHeader in order to add the file to the archive.
 	header, err := tar.FileInfoHeader(s, filepath.ToSlash(target))
 	if err != nil {
-		return errors.WrapIff(err, "failed to get tar#FileInfoHeader for '%s'", name)
+		return error2.WrapIff(err, "failed to get tar#FileInfoHeader for '%s'", name)
 	}
 
 	// Fix the header name if the file is not a symlink.
@@ -305,7 +306,7 @@ func (a *Archive) addToArchive(dirfd int, name, relative string, entry ufs.DirEn
 
 	// Write the tar FileInfoHeader to the archive.
 	if err := a.w.WriteHeader(header); err != nil {
-		return errors.WrapIff(err, "failed to write tar#FileInfoHeader for '%s'", name)
+		return error2.WrapIff(err, "failed to write tar#FileInfoHeader for '%s'", name)
 	}
 
 	// If the size of the file is less than 1 (most likely for symlinks), skip writing the file.
@@ -332,13 +333,13 @@ func (a *Archive) addToArchive(dirfd int, name, relative string, entry ufs.DirEn
 		if os.IsNotExist(err) {
 			return nil
 		}
-		return errors.WrapIff(err, "failed to open '%s' for copying", header.Name)
+		return error2.WrapIff(err, "failed to open '%s' for copying", header.Name)
 	}
 	defer f.Close()
 
 	// Copy the file's contents to the archive using our buffer.
 	if _, err := io.CopyBuffer(a.w, io.LimitReader(f, header.Size), buf); err != nil {
-		return errors.WrapIff(err, "failed to copy '%s' to archive", header.Name)
+		return error2.WrapIff(err, "failed to copy '%s' to archive", header.Name)
 	}
 	return nil
 }

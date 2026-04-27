@@ -200,7 +200,7 @@ func RemoteDownloadEnabled() gin.HandlerFunc {
 }
 
 // ExtractLogger pulls the logger out of the request context and returns it. By
-// default this will include the request ID, but may also include the server ID
+// default, this will include the request ID, but may also include the server ID
 // if that middleware has been used in the chain by the time it is called.
 func ExtractLogger(c *gin.Context) *log.Entry {
 	v, ok := c.Get("logger")

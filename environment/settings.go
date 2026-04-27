@@ -102,14 +102,13 @@ func (l Limits) ProcessLimit() int64 {
 // AsContainerResources returns the available resources for a container in a format
 // that Docker understands.
 func (l Limits) AsContainerResources() container.Resources {
-	pids := l.ProcessLimit()
 	resources := container.Resources{
 		Memory:            l.BoundedMemoryLimit(),
 		MemoryReservation: l.MemoryLimit * 1024 * 1024,
 		MemorySwap:        l.ConvertedSwap(),
 		BlkioWeight:       l.IoWeight,
 		OomKillDisable:    &l.OOMDisabled,
-		PidsLimit:         &pids,
+		PidsLimit:         new(l.ProcessLimit()),
 	}
 
 	// If the CPU Limit is not set, don't send any of these fields through. Providing

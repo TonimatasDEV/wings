@@ -54,7 +54,7 @@ func (c *client) GetServers(ctx context.Context, limit int) ([]RawServerData, er
 
 // ResetServersState updates the state of all servers on the node that are
 // currently marked as "installing" or "restoring from backup" to be marked as
-// a normal successful install state.
+// a normal successful installation state.
 //
 // This handles Wings exiting during either of these processes which will leave
 // things in a bad state within the Panel. This API call is executed once Wings

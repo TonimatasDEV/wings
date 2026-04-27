@@ -12,7 +12,6 @@ import (
 
 	"github.com/tonimatasdev/wings/router/downloader"
 	"github.com/tonimatasdev/wings/router/middleware"
-	"github.com/tonimatasdev/wings/router/tokens"
 	"github.com/tonimatasdev/wings/server"
 	"github.com/tonimatasdev/wings/server/transfer"
 )
@@ -239,27 +238,6 @@ func deleteServer(c *gin.Context) {
 	middleware.ExtractManager(c).Remove(func(server *server.Server) bool {
 		return server.ID() == s.ID()
 	})
-
-	c.Status(http.StatusNoContent)
-}
-
-// Adds any of the JTIs passed through in the body to the deny list for the websocket
-// preventing any JWT generated before the current time from being used to connect to
-// the socket or send along commands.
-//
-// deprecated: prefer /api/deauthorize-user
-func postServerDenyWSTokens(c *gin.Context) {
-	var data struct {
-		JTIs []string `json:"jtis"`
-	}
-
-	if err := c.BindJSON(&data); err != nil {
-		return
-	}
-
-	for _, jti := range data.JTIs {
-		tokens.DenyJTI(jti)
-	}
 
 	c.Status(http.StatusNoContent)
 }

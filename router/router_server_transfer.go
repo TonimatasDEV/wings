@@ -2,11 +2,12 @@ package router
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strings"
 	"time"
 
-	"emperror.dev/errors"
+	error2 "emperror.dev/errors"
 	"github.com/gin-gonic/gin"
 
 	"github.com/tonimatasdev/wings/environment"
@@ -68,7 +69,7 @@ func postServerTransfer(c *gin.Context) {
 			false,
 		); err != nil && !strings.Contains(strings.ToLower(err.Error()), "no such container") {
 			s.SetTransferring(false)
-			middleware.CaptureAndAbort(c, errors.Wrap(err, "failed to stop server for transfer"))
+			middleware.CaptureAndAbort(c, error2.Wrap(err, "failed to stop server for transfer"))
 			return
 		}
 	}
@@ -83,7 +84,7 @@ func postServerTransfer(c *gin.Context) {
 		if _, err := trnsfr.PushArchiveToTarget(data.URL, data.Token); err != nil {
 			notifyPanelOfFailure()
 
-			if err == context.Canceled {
+			if errors.Is(err, context.Canceled) {
 				trnsfr.Log().Debug("canceled")
 				trnsfr.SendMessage("Canceled.")
 				return

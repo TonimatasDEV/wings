@@ -9,7 +9,7 @@ import (
 	"github.com/tonimatasdev/wings/config"
 )
 
-// Defines the allocations available for a given server. When using the Docker environment
+// Allocations Defines the allocations available for a given server. When using the Docker environment
 // driver these correspond to mappings for the container that allow external connections.
 type Allocations struct {
 	// ForceOutgoingIP causes a dedicated bridge network to be created for the
@@ -30,7 +30,7 @@ type Allocations struct {
 	Mappings map[string][]int `json:"mappings"`
 }
 
-// Converts the server allocation mappings into a format that can be understood by Docker. While
+// Bindings Converts the server allocation mappings into a format that can be understood by Docker. While
 // we do strive to support multiple environments, using Docker's standardized format for the
 // bindings certainly makes life a little easier for managing things.
 //
@@ -61,7 +61,7 @@ func (a *Allocations) Bindings() nat.PortMap {
 	return out
 }
 
-// Returns the bindings for the server in a way that is supported correctly by Docker. This replaces
+// DockerBindings Returns the bindings for the server in a way that is supported correctly by Docker. This replaces
 // any reference to 127.0.0.1 with the IP of the pterodactyl0 network interface which will allow the
 // server to operate on a local address while still being accessible by other containers.
 func (a *Allocations) DockerBindings() nat.PortMap {
@@ -92,7 +92,7 @@ func (a *Allocations) DockerBindings() nat.PortMap {
 	return out
 }
 
-// Converts the server allocation mappings into a PortSet that can be understood
+// Exposed Converts the server allocation mappings into a PortSet that can be understood
 // by Docker. This formatting is slightly different than "Bindings" as it should
 // return an empty struct rather than a binding.
 //

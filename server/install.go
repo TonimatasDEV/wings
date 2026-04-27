@@ -13,6 +13,7 @@ import (
 
 	"emperror.dev/errors"
 	"github.com/apex/log"
+	"github.com/containerd/errdefs"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/mount"
@@ -165,7 +166,7 @@ func (ip *InstallationProcess) RemoveContainer() error {
 		RemoveVolumes: true,
 		Force:         true,
 	})
-	if err != nil && !client.IsErrNotFound(err) {
+	if err != nil && !errdefs.IsNotFound(err) {
 		return err
 	}
 	return nil
@@ -338,7 +339,7 @@ func (ip *InstallationProcess) AfterExecute(containerId string) error {
 		Follow:     false,
 	})
 
-	if err != nil && !client.IsErrNotFound(err) {
+	if err != nil && !errdefs.IsNotFound(err) {
 		return err
 	}
 

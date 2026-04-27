@@ -101,7 +101,7 @@ func (fs *Filesystem) Touch(p string, flag int) (ufs.File, error) {
 // the server when writing new files or modifying existing ones.
 //
 // DEPRECATED: use `Write` instead.
-func (fs *Filesystem) Writefile(p string, r io.Reader) error {
+func (fs *Filesystem) Writefile(p string, r io.Reader) error { // TODO: Replace with Write
 	var currentSize int64
 	st, err := fs.unixFS.Stat(p)
 	if err != nil && !errors.Is(err, ufs.ErrNotExist) {

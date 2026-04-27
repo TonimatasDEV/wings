@@ -1,15 +1,17 @@
 package server
 
 import (
-	"emperror.dev/errors"
+	"errors"
+
+	errors2 "emperror.dev/errors"
 )
 
 var (
-	ErrIsRunning            = errors.New("server is running")
-	ErrSuspended            = errors.New("server is currently in a suspended state")
-	ErrServerIsInstalling   = errors.New("server is currently installing")
-	ErrServerIsTransferring = errors.New("server is currently being transferred")
-	ErrServerIsRestoring    = errors.New("server is currently being restored")
+	ErrIsRunning            = errors2.New("server is running")
+	ErrSuspended            = errors2.New("server is currently in a suspended state")
+	ErrServerIsInstalling   = errors2.New("server is currently installing")
+	ErrServerIsTransferring = errors2.New("server is currently being transferred")
+	ErrServerIsRestoring    = errors2.New("server is currently being restored")
 )
 
 type crashTooFrequent struct{}
@@ -19,7 +21,8 @@ func (e *crashTooFrequent) Error() string {
 }
 
 func IsTooFrequentCrashError(err error) bool {
-	_, ok := err.(*crashTooFrequent)
+	var crashTooFrequent *crashTooFrequent
+	ok := errors.As(err, &crashTooFrequent)
 
 	return ok
 }
@@ -31,7 +34,8 @@ func (e *serverDoesNotExist) Error() string {
 }
 
 func IsServerDoesNotExistError(err error) bool {
-	_, ok := err.(*serverDoesNotExist)
+	var serverDoesNotExist *serverDoesNotExist
+	ok := errors.As(err, &serverDoesNotExist)
 
 	return ok
 }

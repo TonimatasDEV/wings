@@ -37,7 +37,7 @@ func (s *Server) Throttler() *ConsoleThrottle {
 		var period time.Duration
 
 		if throttles.Period > math.MaxInt64 {
-			period = time.Duration(math.MaxInt64) * time.Millisecond
+			period = time.Duration(math.MaxInt64)
 		} else {
 			period = time.Duration(int64(throttles.Period)) * time.Millisecond
 		}

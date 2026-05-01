@@ -2,9 +2,11 @@ name: GoSec Security Scan
 
 on:
     push:
-        branches: [ "main", "master" ]
+        branches:
+            - develop
     pull_request:
-        branches: [ "main", "master" ]
+        branches:
+            - develop
 
 jobs:
     gosec:

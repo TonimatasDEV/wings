@@ -81,7 +81,7 @@ func (s *Server) Backup(b backup.BackupInterface) error {
 			"uuid":          b.Identifier(),
 			"is_successful": false,
 			"checksum":      "",
-			"checksum_type": "sha1",
+			"checksum_type": "sha256",
 			"file_size":     0,
 		})
 
@@ -105,7 +105,7 @@ func (s *Server) Backup(b backup.BackupInterface) error {
 		"uuid":          b.Identifier(),
 		"is_successful": true,
 		"checksum":      ad.Checksum,
-		"checksum_type": "sha1",
+		"checksum_type": "sha256",
 		"file_size":     ad.Size,
 	})
 

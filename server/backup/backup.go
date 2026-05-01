@@ -2,7 +2,7 @@ package backup
 
 import (
 	"context"
-	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/hex"
 	"io"
 	"io/fs"
@@ -51,7 +51,7 @@ type BackupInterface interface {
 	Generate(context.Context, *filesystem.Filesystem, string) (*ArchiveDetails, error)
 	// Ignored returns the ignored files for this backup instance.
 	Ignored() string
-	// Checksum returns a SHA1 checksum for the generated backup.
+	// Checksum returns a SHA256 checksum for the generated backup.
 	Checksum() ([]byte, error)
 	// Size returns the size of the generated backup.
 	Size() (int64, error)
@@ -108,7 +108,7 @@ func (b *Backup) Size() (int64, error) {
 
 // Checksum returns the SHA256 checksum of a backup.
 func (b *Backup) Checksum() ([]byte, error) {
-	h := sha1.New()
+	h := sha256.New()
 
 	f, err := os.Open(b.Path())
 	if err != nil {
@@ -127,7 +127,7 @@ func (b *Backup) Checksum() ([]byte, error) {
 // Details returns both the checksum and size of the archive currently stored on
 // the disk to the caller.
 func (b *Backup) Details(ctx context.Context, parts []remote.BackupPart) (*ArchiveDetails, error) {
-	ad := ArchiveDetails{ChecksumType: "sha1", Parts: parts}
+	ad := ArchiveDetails{ChecksumType: "sha256", Parts: parts}
 	g, ctx := errgroup.WithContext(ctx)
 
 	g.Go(func() error {

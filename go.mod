@@ -15,6 +15,7 @@ require (
 	github.com/beevik/etree v1.6.0
 	github.com/buger/jsonparser v1.1.2
 	github.com/cenkalti/backoff/v4 v4.3.0
+	github.com/containerd/errdefs v0.3.0
 	github.com/creasty/defaults v1.8.0
 	github.com/docker/docker v28.5.2+incompatible
 	github.com/docker/go-connections v0.7.0
@@ -31,7 +32,7 @@ require (
 	github.com/iancoleman/strcase v0.3.0
 	github.com/icza/dyno v0.0.0-20230330125955-09f820a8d9c0
 	github.com/juju/ratelimit v1.0.2
-	github.com/klauspost/compress v1.18.5
+	github.com/klauspost/compress v1.18.6
 	github.com/klauspost/pgzip v1.2.6
 	github.com/magiconair/properties v1.8.10
 	github.com/mattn/go-colorable v0.1.14
@@ -64,7 +65,6 @@ require (
 	github.com/bytedance/sonic v1.15.0 // indirect
 	github.com/bytedance/sonic/loader v0.5.0 // indirect
 	github.com/cloudwego/base64x v0.1.6 // indirect
-	github.com/containerd/errdefs v0.3.0 // indirect
 	github.com/containerd/errdefs/pkg v0.3.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect

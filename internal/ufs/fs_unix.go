@@ -664,7 +664,16 @@ func (fs *UnixFS) openat(dirfd int, name string, flag int, mode FileMode) (int, 
 	for {
 		var err error
 		if fs.useOpenat2 {
-			fd, err = fs._openat2(dirfd, name, uint64(flag), uint64(syscallMode(mode)))
+			if flag < 0 {
+				return -1, fmt.Errorf("invalid flag value: %d", flag)
+			}
+
+			sysMode := syscallMode(mode)
+			if sysMode < 0 {
+				return -1, fmt.Errorf("invalid mode value: %d", mode)
+			}
+
+			fd, err = fs._openat2(dirfd, name, uint64(flag), uint64(sysMode))
 		} else {
 			fd, err = fs._openat(dirfd, name, flag, uint32(syscallMode(mode)))
 		}

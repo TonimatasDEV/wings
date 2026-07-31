@@ -19,6 +19,10 @@ func (t *Transfer) Archive() (*Archive, error) {
 			return nil, fmt.Errorf("transfer: failed to get server disk usage: %w", err)
 		}
 
+		if rawSize < 0 {
+			return nil, fmt.Errorf("transfer: invalid disk usage size (%d bytes)", rawSize)
+		}
+
 		// Create a new archive instance and assign it to the transfer.
 		t.archive = NewArchive(t, uint64(rawSize))
 	}

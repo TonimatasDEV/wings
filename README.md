@@ -5,4 +5,4 @@
 
 Another [Pterodactyl Wings]() fork.
 
-Current Pterodactyl Wings commit hash: ac814095055e999aa60c2cd1aac7f6ac45ee1742
+Current Pterodactyl Wings commit hash: 5f71f65711b6b9e6f913bec94a7b36d9a5eaae49
